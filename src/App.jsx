@@ -1,10 +1,9 @@
 import React from "react"
 
-class Instances extends React.Component{
+class App extends React.Component{
 
     constructor(props) {
         super(props);
-
         this.start = this.start.bind(this);
         this.stop = this.stop.bind(this);
         this.create = this.create.bind(this);
@@ -20,7 +19,6 @@ class Instances extends React.Component{
         this.removeRestream = this.removeRestream.bind(this);
 
         this.state = {
-            started : "Waiting...",
             instanceId : "create instance",
             instanceData: {
                 Reservations: [{
@@ -41,25 +39,24 @@ class Instances extends React.Component{
             restreamId: "no restream"
         };
     }
-
+    //functions to communicate with express server
     start(){
         fetch("/start")
-            .then(response => {return response.json()})
-            .then((data) => this.setState({started : data.message}))
+            .then(() => this.describe())
     }
 
     stop(){
         fetch("/stop")
-            .then(response => {return response.json()})
-            .then((data) => this.setState({started : data.message}))
+            .then(() => this.describe())
     }
 
     create(){
         fetch("/create")
             .then(res => {return res.json()})
             .then((data) => {
-                this.setState({started : data.message, instanceId: data.instanceId});
-                sessionStorage.setItem("instanceId", data.instanceId);
+                this.describe()
+                this.setState({instanceId: data.instanceId});
+                sessionStorage.setItem("instanceId", data.instanceId); // Saving the instance ID to a Session storage
             })
     }
 
@@ -75,6 +72,9 @@ class Instances extends React.Component{
             })
     }
 
+    // Functions to communicate with Callaba API
+
+    // Getting access token
     authentificate(){
         fetch('http://' + this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].PublicIpAddress + '/api/auth/login',
             {
@@ -95,6 +95,7 @@ class Instances extends React.Component{
             })
     }
 
+    // Creating a new SRT server
     createStream(){
         fetch('http://' + this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].PublicIpAddress + '/api/servers/create',
             {
@@ -105,7 +106,7 @@ class Instances extends React.Component{
                 },
                 body: JSON.stringify(
                     {
-                        server_name: "Test SRT server",
+                        server_name: "Test SRT server", // CHANGE WITH ANY SERVER NAME YOU WANT
                         server_type: "SERVER_TYPE_SRT",
                         server_port: 1935,
                         server_latency: 200,
@@ -120,6 +121,7 @@ class Instances extends React.Component{
                 this.setState({serverId: data._id, serverState: "server running"});
             })
     }
+    // Stopping an SRT server
     stopStream(){
         fetch('http://' + this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].PublicIpAddress + '/api/servers/stop',
             {
@@ -139,7 +141,7 @@ class Instances extends React.Component{
                 if(data.ok) this.setState({serverState: "server stopped"});
             })
     }
-
+    // Starting a stopped SRT server
     startStream(){
         fetch('http://' + this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].PublicIpAddress + '/api/servers/start',
             {
@@ -159,6 +161,7 @@ class Instances extends React.Component{
                 if(data.ok) this.setState({serverState: "server running"});
             })
     }
+    // Removing an SRT server
     removeStream(){
         fetch('http://' + this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].PublicIpAddress + '/api/servers/remove',
             {
@@ -178,6 +181,7 @@ class Instances extends React.Component{
                 if(data.ok) this.setState({serverState: "no server", serverId: "no server id"});
             })
     }
+    // Creating a new Web Player of your SRT stream
     createPlayer(){
         fetch('http://' + this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].PublicIpAddress + '/api/vod/create',
             {
@@ -208,6 +212,7 @@ class Instances extends React.Component{
             .then(response => response.json())
             .then(data => this.setState({playerId: data._id, playerState: "running"}))
     }
+    // Removing a Web player
     removePlayer(){
         fetch('http://' + this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].PublicIpAddress + '/api/vod/remove',
             {
@@ -222,6 +227,7 @@ class Instances extends React.Component{
             .then(response => response.json())
             .then(() => this.setState({playerState: "no player"}))
     }
+    // Creating a restream on YouTube
     createRestream(){
         fetch('http://'+ this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].PublicIpAddress +'/api/restream/create',
             {
@@ -252,6 +258,7 @@ class Instances extends React.Component{
             .then(response => response.json())
             .then(data => this.setState({restreamId: data._id}))
     }
+    // Removing a restream on YouTube
     removeRestream(){
         fetch('http://'+ this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].PublicIpAddress +'/api/restream/remove',
             {
@@ -273,94 +280,95 @@ class Instances extends React.Component{
 
     render(){
         return(
-            <div>
-                <h3>INSTANCE</h3>
-                <div className={'box'}>
-                    <div className={'box-info'}>
-                        <p className={'field'}>{
-                            this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].InstanceId}</p>
-                        <p className={'field'}>{
-                            this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].ImageId}</p>
-                        <p className={'field'}>{
-                            this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].State.Name}</p>
+            <div className="App">
+                <header className="App-header">
+                    <div>
+                        <h3>INSTANCE</h3>
+                        <div className={'box'}>
+                            <div className={'box-info'}>
+                                <p className={'field'}>{
+                                    this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].InstanceId}</p>
+                                <p className={'field'}>{
+                                    this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].ImageId}</p>
+                                <p className={'field'}>{
+                                    this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].State.Name}</p>
 
+                            </div>
+                            <div className={'box-manage'}>
+                                <button className={'button'} onClick={this.start}>Start</button>
+                                <button className={'button'} onClick={this.stop}>Stop</button>
+                                <button className={'button'} onClick={this.create}>Create</button>
+                            </div>
+                        </div>
+                        <h3>SRT SERVER</h3>
+                        <div className={'box'}>
+                            <div className={'box-info'}>
+                                <p className={'field'}>{
+                                    this.state.callabaToken !== "" ? "authorised" : "not authorised"
+                                }</p>
+                                <p className={'field'}>{
+                                    this.state.serverId
+                                }</p>
+                                <p className={'field'}>{
+                                    this.state.serverState
+                                }</p>
+                                <p className={'field'}
+                                   style={{cursor: "pointer"}}
+                                   onClick={() =>  navigator.clipboard.writeText("srt://" + this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].PublicIpAddress + ":1935?streamid=publisher/test-srt-server/srt-stream-01&latency=200000&maxbw=-1")}
+                                >
+                                    &#10063; copy OBS URL
+                                </p>
+                                <p className={'field'}
+                                   style={{cursor: "pointer"}}
+                                   onClick={() =>  navigator.clipboard.writeText("srt://" + this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].PublicIpAddress + ":1935?streamid=publisher/test-srt-server/srt-stream-01")}
+                                >
+                                    &#10063; copy ffmpeg URL
+                                </p>
+                            </div>
+                            <div className={'box-manage'}>
+                                <button className={'button'} onClick={this.authentificate}>Auth</button>
+                                <button className={'button'} onClick={this.createStream}>Create</button>
+                                <button className={'button'} onClick={this.stopStream}>Stop</button>
+                                <button className={'button'} onClick={this.startStream}>Start</button>
+                                <button className={'button'} onClick={this.removeStream}>Remove</button>
+                            </div>
+                        </div>
+                        <h3>WEB PLAYER</h3>
+                        <div className={'box'}>
+                            <div className={'box-info'}>
+                                <p className={'field'}>{this.state.playerState}</p>
+                                <p className={'field'}>{this.state.playerState !== "running" ? "no web player": <a target="_blank" href={'http://' + this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].PublicIpAddress + "/vod-player/" + this.state.playerId}>Web player</a>}</p>
+                            </div>
+                            <div className={'box-manage'}>
+                                <button className={'button'} onClick={this.createPlayer}>Create</button>
+                                <button className={'button'} onClick={this.removePlayer}>Remove</button>
+                            </div>
+                        </div>
+                        <h3>RESTREAM TO YOUTUBE</h3>
+                        <div className={'box'}>
+                            <div className={'box-info'}>
+                                <p><input className={'input'} type="text" placeholder={'enter youtube stream key'} onClick={(event)=>{this.setState({youtubeKey: event.target.value})}}/></p>
+                                <p className={'field'}>{this.state.restreamId}</p>
+                            </div>
+                            <div className={'box-manage'}>
+                                <button className={'button'} onClick={this.createRestream}>Create</button>
+                                <button className={'button'} onClick={this.removeRestream}>Remove</button>
+                            </div>
+                        </div>
+                        <div className={'gap'}></div>
                     </div>
-                    <div className={'box-manage'}>
-                        <button className={'button'} onClick={this.start}>Start</button>
-                        <button className={'button'} onClick={this.stop}>Stop</button>
-                        <button className={'button'} onClick={this.create}>Create</button>
-                    </div>
-                </div>
-                <h3>SRT SERVER</h3>
-                <div className={'box'}>
-                    <div className={'box-info'}>
-                        <p className={'field'}>{
-                            this.state.callabaToken !== "" ? "authorised" : "not authorised"
-                        }</p>
-                        <p className={'field'}>{
-                            this.state.serverId
-                        }</p>
-                        <p className={'field'}>{
-                            this.state.serverState
-                        }</p>
-                        <p className={'field'}
-                           style={{cursor: "pointer"}}
-                           onClick={() =>  navigator.clipboard.writeText("srt://" + this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].PublicIpAddress + ":1935?streamid=publisher/test-srt-server/srt-stream-01&latency=200000&maxbw=-1")}
-                        >
-                            &#10063; copy OBS URL
-                        </p>
-                        <p className={'field'}
-                           style={{cursor: "pointer"}}
-                           onClick={() =>  navigator.clipboard.writeText("srt://" + this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].PublicIpAddress + ":1935?streamid=publisher/test-srt-server/srt-stream-01")}
-                        >
-                            &#10063; copy ffmpeg URL
-                        </p>
-                    </div>
-                    <div className={'box-manage'}>
-                        <button className={'button'} onClick={this.authentificate}>Auth</button>
-                        <button className={'button'} onClick={this.createStream}>Create</button>
-                        <button className={'button'} onClick={this.stopStream}>Stop</button>
-                        <button className={'button'} onClick={this.startStream}>Start</button>
-                        <button className={'button'} onClick={this.removeStream}>Remove</button>
-                    </div>
-                </div>
-                <h3>WEB PLAYER</h3>
-                <div className={'box'}>
-                    <div className={'box-info'}>
-                        <p className={'field'}>{this.state.playerState}</p>
-                        <p className={'field'}>{this.state.playerState !== "running" ? "no web player": <a target="_blank" href={'http://' + this.state.instanceData.Reservations[this.state.instanceIndex].Instances[0].PublicIpAddress + "/vod-player/" + this.state.playerId}>Web player</a>}</p>
-                    </div>
-                    <div className={'box-manage'}>
-                        <button className={'button'} onClick={this.createPlayer}>Create</button>
-                        <button className={'button'} onClick={this.removePlayer}>Remove</button>
-                    </div>
-                </div>
-                <h3>RESTREAM TO YOUTUBE</h3>
-                <div className={'box'}>
-                    <div className={'box-info'}>
-                        <p><input className={'input'} type="text" placeholder={'enter youtube stream key'} onClick={(event)=>{this.setState({youtubeKey: event.target.value})}}/></p>
-                        <p className={'field'}>{this.state.restreamId}</p>
-                    </div>
-                    <div className={'box-manage'}>
-                        <button className={'button'} onClick={this.createRestream}>Create</button>
-                        <button className={'button'} onClick={this.removeRestream}>Remove</button>
-                    </div>
-                </div>
-                <div className={'gap'}></div>
+                </header>
             </div>
         );
     }
 
     componentDidMount(){
         this.describe();
-        setInterval(this.describe, 5000);
-        if(sessionStorage.getItem("instanceId")){
+        setInterval(this.describe, 10000); // Monitoring the instances of your account
+        if(sessionStorage.getItem("instanceId")){ //Checking for the last created instance in this session
             this.setState({instanceId: sessionStorage.getItem("instanceId")})
         }
     }
-    /*componentWillUnmount(){
-        fetch("/stop");
-    }*/
 }
 
-export default Instances;
+export default App;
